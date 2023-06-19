@@ -24,8 +24,8 @@ def train_epoch(loader, model, criterion, optimizer):
     model.train()
 
     for i, (input, target) in enumerate(loader):
-        input = input.cuda(async=True)
-        target = target.cuda(async=True)
+        input = input.cuda(non_blocking=True)
+        target = target.cuda(non_blocking=True)
         input_var = torch.autograd.Variable(input)
         target_var = torch.autograd.Variable(target)
 
@@ -53,8 +53,8 @@ def eval(loader, model, criterion):
     model.eval()
 
     for i, (input, target) in enumerate(loader):
-        input = input.cuda(async=True)
-        target = target.cuda(async=True)
+        input = input.cuda(non_blocking=True)
+        target = target.cuda(non_blocking=True)
         input_var = torch.autograd.Variable(input)
         target_var = torch.autograd.Variable(target)
 
@@ -121,7 +121,7 @@ def bn_update(loader, model):
     model.apply(lambda module: _get_momenta(module, momenta))
     n = 0
     for input, _ in loader:
-        input = input.cuda(async=True)
+        input = input.cuda(non_blocking=True)
         input_var = torch.autograd.Variable(input)
         b = input_var.data.size(0)
 
