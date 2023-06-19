@@ -75,7 +75,7 @@ loaders = {
         pin_memory=True
     )
 }
-num_classes = max(train_set.train_labels) + 1
+num_classes = max(train_set.targets) + 1
 
 print('Preparing model')
 model = model_cfg.base(*model_cfg.args, num_classes=num_classes, **model_cfg.kwargs)
