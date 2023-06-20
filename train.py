@@ -146,11 +146,14 @@ for epoch in range(start_epoch, args.epochs):
     lr = schedule(epoch)
     utils.adjust_learning_rate(optimizer, lr)
     train_res = utils.train_epoch(loaders['train'], model, criterion, optimizer)
+
+    # check loss and accuracy on the test set when evaluation frequency is reached and for the final epoch
     if epoch == 0 or epoch % args.eval_freq == args.eval_freq - 1 or epoch == args.epochs - 1:
         test_res = utils.eval(loaders['test'], model, criterion)
     else:
         test_res = {'loss': None, 'accuracy': None}
 
+    # when args.swa_c_epochs=1 (the default), the third condition is always true
     if args.swa and (epoch + 1) >= args.swa_start and (epoch + 1 - args.swa_start) % args.swa_c_epochs == 0:
         utils.moving_average(swa_model, model, 1.0 / (swa_n + 1))
         swa_n += 1
