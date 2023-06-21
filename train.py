@@ -94,11 +94,11 @@ else:
 def schedule(epoch):
     t = (epoch) / (args.swa_start if args.swa else args.epochs)
     lr_ratio = args.swa_lr / args.lr_init if args.swa else 0.01
-    if t <= 0.5:
+    if t <= 0.5: # for half of the training cycle, we dont change the default learning rate
         factor = 1.0
-    elif t <= 0.9:
+    elif t <= 0.9: # then until there's 10% of the iterations left, we linearly decay the LR per cycle 
         factor = 1.0 - (1.0 - lr_ratio) * (t - 0.5) / 0.4
-    else:
+    else: # in SWA mode: last 10% of training time will use the swa learning rate, in SGD: 1% of the initial learning rate
         factor = lr_ratio
     return args.lr_init * factor
 
@@ -146,11 +146,15 @@ for epoch in range(start_epoch, args.epochs):
     lr = schedule(epoch)
     utils.adjust_learning_rate(optimizer, lr)
     train_res = utils.train_epoch(loaders['train'], model, criterion, optimizer)
+
+    # check loss and accuracy on the test set when evaluation frequency is reached and for the final epoch
     if epoch == 0 or epoch % args.eval_freq == args.eval_freq - 1 or epoch == args.epochs - 1:
         test_res = utils.eval(loaders['test'], model, criterion)
     else:
         test_res = {'loss': None, 'accuracy': None}
 
+    # when args.swa_c_epochs==1 (the default), the third condition is always true
+    # compute moving average when in swa mode
     if args.swa and (epoch + 1) >= args.swa_start and (epoch + 1 - args.swa_start) % args.swa_c_epochs == 0:
         utils.moving_average(swa_model, model, 1.0 / (swa_n + 1))
         swa_n += 1
@@ -170,6 +174,7 @@ for epoch in range(start_epoch, args.epochs):
             optimizer=optimizer.state_dict()
         )
 
+    # print progress
     time_ep = time.time() - time_ep
     values = [epoch + 1, lr, train_res['loss'], train_res['accuracy'], test_res['loss'], test_res['accuracy'], time_ep]
     if args.swa:
